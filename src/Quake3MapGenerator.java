@@ -24,6 +24,8 @@
     *     
     *     José Antonio Robles Ordóñez.
     *     
+    *     José Luis Lebrón Lozano.
+    *     
     *     
     ****************************************************************
 */
@@ -31,8 +33,6 @@
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-
-// Probando
 
 class Point{
 	
