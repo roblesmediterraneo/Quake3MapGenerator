@@ -37,37 +37,43 @@
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import javax.vecmath.*;
 
-class Point{
+class Point extends Vector3f{
+	private static final long serialVersionUID = 1L;
 	
-	public int x;
-	public int y;
-	public int z;
-	
-	public Point(){
-		x = y = z = 0;
+	public Point(float X, float Y, float Z){
+		x = X;
+		y = Y;
+		z = Z;
 	}
 	
 	public Point(int X, int Y, int Z){
-		x = X; y = Y; z = Z;
+		x = (float)X;
+		y = (float)Y;
+		z = (float)Z;
 	}
 	
-	public void print(PrintWriter OUT){
-		OUT.printf("( %d %d %d )", x,y,z);
+	public Point(Point P){
+		x = P.x;
+		y = P.y;
+		z = P.z;
 	}
-	
-	public void scale(int X, int Y, int Z){
+
+	public void scale(float X, float Y, float Z){
 		x *= X;
 		y *= Y;
 		z *= Z;
 	}
 	
-	public void translate(int X, int Y, int Z){
-		x += X;
-		y += Y;
-		z += Z;
+	public void print(PrintWriter OUT){
+		
+		OUT.printf("( %d %d %d )", Math.round(x), Math.round(y), Math.round(z));
+		
 	}
+	
 }
+
 
 class Plane{
 	public Point p0;
@@ -118,20 +124,22 @@ class Plane{
 		xx1 = xx2 = xx3 = 0;
 	}
 	
-	public void scale(int X, int Y, int Z){
-		p0.scale(X, Y, Z);
-		p1.scale(X, Y, Z);
-		p2.scale(X, Y, Z);
+	public void scale(float X, float Y, float Z){		
+		p0.scale(X,Y,Z);
+		p1.scale(X,Y,Z);
+		p2.scale(X,Y,Z);
 	}
 	
-	public void translate(int X, int Y, int Z){
-		p0.translate(X, Y, Z);
-		p1.translate(X, Y, Z);
-		p2.translate(X, Y, Z);
+	public void translate(float X, float Y, float Z){
+		Vector3f dummy = new Vector3f(X,Y,Z);
+		
+		p0.add(dummy);
+		p1.add(dummy);
+		p2.add(dummy);
 	}
 	
 	// xy
-	static Plane top(int Z){
+	static Plane top(float Z){
 		// ( 1 1 1 ) ( 1 -1 1 ) ( -1 1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
 		return new Plane(new Point(1,1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
@@ -139,7 +147,7 @@ class Plane{
 	}
 	
 	// xz
-	static Plane back(int Y){
+	static Plane back(float Y){
 		// ( 1 1 1 ) ( -1 1 1 ) ( 1 1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 
 		return new Plane( new Point(1,Y,1), new Point(-1,Y,1), new Point(1,Y,-1));
@@ -147,7 +155,7 @@ class Plane{
 	}
 		
 	// yz
-	static Plane right(int X){
+	static Plane right(float X){
 		// ( 1 1 1 ) ( 1 1 -1 ) ( 1 -1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
 		return new Plane( new Point(X,1,1), new Point(X,1,-1), new Point(X,-1,1));
@@ -155,21 +163,21 @@ class Plane{
 	}
 	
 	// xy
-	static Plane bottom(int Z){
+	static Plane bottom(float Z){
 		// ( -1 -1 -1 ) ( 1 -1 -1 ) ( -1 1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
 		return new Plane( new Point(-1,-1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
 	}
 	
 	// xz
-	static Plane front(int Y){
+	static Plane front(float Y){
 		// ( -1 -1 -1 ) ( -1 -1 1 ) ( 1 -1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
 		return new Plane( new Point(-1,Y,-1),new Point(-1,Y,1),new Point(1,Y,-1));
 	}
 	
 	// yz
-	static Plane left(int X){
+	static Plane left(float X){
 		// 	( -1 -1 -1 ) ( -1 1 -1 ) ( -1 -1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
 		return new Plane( new Point(X,-1,-1),new Point(X,1,-1),new Point(X,-1,1));
@@ -177,22 +185,20 @@ class Plane{
 	
 	public void print(PrintWriter OUT){
 		
+		//OUT.print(' ');
 		p0.print(OUT);
-		OUT.print(' ');
 		
+		OUT.print(' ');
 		p1.print(OUT);
-		OUT.print(' ');
 		
+		OUT.print(' ');
 		p2.print(OUT);
-		OUT.print(' ');
 		
-		OUT.print( texture );
+		OUT.print( " " + texture );
 		
 		OUT.printf(" %d %d %d %.1f %.1f %d %d %d", sShift, tShift, rotation, sScale, tScale, xx1, xx2, xx3 );
 
-	}
-	
-	
+	}	
 }
 
 class Brush{
@@ -216,10 +222,10 @@ class Brush{
 		OUT.println('}');
 	}
 	
-	public void scale(int X, int Y, int Z){
+	public void scale(float X, float Y, float Z){
 		
 		for(Plane p : planes){
-			p.scale(X, Y, Z);
+			p.scale( X, Y, Z );
 		}
 		
 	}
@@ -235,7 +241,7 @@ class Brush{
 		planes.add(P);
 	}
 	
-	public static Brush cube(int LEFT, int RIGHT, int FRONT, int BACK, int BOTTOM, int TOP){
+	public static Brush cube(float LEFT, float RIGHT, float FRONT, float BACK, float BOTTOM, float TOP, String TEXTURE){
 		
 		Brush b;
 		
@@ -249,10 +255,13 @@ class Brush{
 		b.addPlane( Plane.front( FRONT ) );
 		b.addPlane( Plane.left( LEFT ) );
 		
+		for( Plane p : b.planes )
+			p.texture = TEXTURE;
+		
 		return b;
 		
 	}
-	
+		
 }
 
 class Map{
@@ -281,7 +290,62 @@ class Map{
 		}
 		
 		OUT.println('}');
-	}	
+	}
+	
+	public void addRoom(float WIDTH, float HEIGHT, float DEPTH, Point CENTER, float WALL_WIDTH, String[] TEXTURES){
+		// Add a room to the map centered at CENTER
+		
+		// First find the four corners of the floor
+		Point frontLeft, frontRight, backLeft, backRight;
+		
+		float width2 = WIDTH / 2.0f;
+		float height2 = HEIGHT / 2.0f;
+		float depth2 = DEPTH / 2.0f;
+		
+		frontLeft = new Point(CENTER);
+		frontLeft.add(new Point(-width2,-depth2,-height2));
+		
+		frontRight = new Point(CENTER);
+		frontRight.add(new Point(width2,-depth2,-height2));
+		
+		backLeft = new Point(CENTER);
+		backLeft.add(new Point(-width2,depth2,-height2));
+		
+		backRight = new Point(CENTER);
+		backRight.add(new Point(width2,depth2,-height2));
+		
+		// Now build up the brushes using that points
+		
+		
+		
+		Brush b;
+		
+		// First the front wall		
+		b = Brush.cube(frontLeft.x-WALL_WIDTH, frontLeft.x, frontLeft.y, backLeft.y, frontLeft.z, frontLeft.z+HEIGHT, TEXTURES[0]);
+		addBrush(b);
+		
+		// Second the back wall
+		b = Brush.cube(frontRight.x, frontRight.x+WALL_WIDTH, frontRight.y, backLeft.y, frontLeft.z, frontLeft.z+HEIGHT, TEXTURES[1]);
+		addBrush(b);
+		
+		// Third left wall		
+		b = Brush.cube(frontLeft.x, frontRight.x, frontLeft.y-WALL_WIDTH, frontLeft.y, frontLeft.z, frontLeft.z+HEIGHT, TEXTURES[2]);		
+		addBrush(b);
+		
+		// Fourth right wall
+		b = Brush.cube(frontLeft.x, frontRight.x, backLeft.y, backLeft.y+WALL_WIDTH, frontLeft.z, frontLeft.z+HEIGHT, TEXTURES[3]);	
+		addBrush(b);
+		
+		// Fifth bottom wall
+		b = Brush.cube(frontLeft.x, frontRight.x, frontLeft.y, backLeft.y, frontLeft.z-WALL_WIDTH, frontLeft.z, TEXTURES[4]);
+		addBrush(b);
+		
+		// Finally top wall
+		b = Brush.cube(frontLeft.x, frontRight.x, frontLeft.y, backLeft.y, frontLeft.z+HEIGHT, frontLeft.z+HEIGHT+WALL_WIDTH, TEXTURES[5]);
+		addBrush(b);
+		
+		
+	}
 	
 }
 
@@ -293,22 +357,28 @@ public class Quake3MapGenerator {
 		
 		Brush b;
 		
-		b = Brush.cube(-1, 1, -1, 1, -10, 0);		
-		b.scale(1000, 1000, 1);
+		//b = Brush.cube(-1, 1, -1, 1, -10, 0);		
+		//b.scale(1000, 1000, 1);
 		
-		mapa.addBrush(b);
+		//mapa.addBrush(b);
+		String[] textures = {
+				"base_wall/concrete_dark","base_wall/concrete_dark",
+				"base_wall/concrete_dark","base_wall/concrete_dark",
+				"base_floor/diamond2c","skies/s18"
+		};
 		
-		for(int X = -1000; X < 1000; X+=100){
-			for( int Y = -1000; Y < 1000; Y+=100){
+		mapa.addRoom(2000, 240, 2000, new Point(0,0,120), 16, textures);
+		
+		for(int X = -1000; X < 1000; X+=200){
+			for( int Y = -1000; Y < 1000; Y+=200){
 				
-				b = Brush.cube(X, X+50, Y, Y+50, 0, 50);
+				b = Brush.cube(X, X+50, Y, Y+50, 0, 50, "base_wall/concrete_dark");
 				
 				mapa.addBrush(b);
 			}
 		}
 		
 		try {
-			
 			PrintWriter out = new PrintWriter("output.map");
 			
 			mapa.print(out);
