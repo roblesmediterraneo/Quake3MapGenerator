@@ -34,13 +34,15 @@
     ****************************************************************
 */
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+
+import javax.media.j3d.Transform3D;
 import javax.vecmath.*;
 
 class Point extends Vector3f{
 	private static final long serialVersionUID = 1L;
+	public static final double deg2rad = Math.PI/180.0;
 	
 	public Point(float X, float Y, float Z){
 		x = X;
@@ -64,6 +66,33 @@ class Point extends Vector3f{
 		x *= X;
 		y *= Y;
 		z *= Z;
+	}
+	
+	public void rotateX(float X){
+		
+		Transform3D rotation = new Transform3D();
+		
+		rotation.rotX( X * Point.deg2rad );
+		rotation.transform(this);
+		
+	}
+	
+	public void rotateY(float Y){
+		
+		Transform3D rotation = new Transform3D();
+		
+		rotation.rotY( Y * Point.deg2rad );
+		rotation.transform(this);
+		
+	}
+	
+	public void rotateZ(float Z){
+		
+		Transform3D rotation = new Transform3D();
+		
+		rotation.rotZ( -Z * Point.deg2rad );
+		rotation.transform(this);
+		
 	}
 	
 	public void print(PrintWriter OUT){
@@ -91,7 +120,7 @@ class Plane{
 	public int xx1;
 	public int xx2;
 	public int xx3;
-
+	
 	public Plane(){
 		texture = "NULL";
 		
@@ -136,6 +165,30 @@ class Plane{
 		p0.add(dummy);
 		p1.add(dummy);
 		p2.add(dummy);
+	}
+	
+	public void rotateX(float X){
+		
+		p0.rotateX(X);
+		p1.rotateX(X);
+		p2.rotateX(X);
+		
+	}
+	
+	public void rotateY(float Y){
+		
+		p0.rotateY(Y);
+		p1.rotateY(Y);
+		p2.rotateY(Y);
+		
+	}
+	
+	public void rotateZ(float Z){
+		
+		p0.rotateZ(Z);
+		p1.rotateZ(Z);
+		p2.rotateZ(Z);
+		
 	}
 	
 	// xy
@@ -238,6 +291,27 @@ class Brush{
 			p.translate(X, Y, Z);
 		}
 	}
+		
+	public void rotateX(float X){
+		
+		for(Plane p : planes){
+			p.rotateX(X);
+		}
+	}
+	
+	public void rotateY(float Y){
+		
+		for(Plane p : planes){
+			p.rotateY(Y);
+		}
+	}
+	
+	public void rotateZ(float Z){
+		
+		for(Plane p : planes){
+			p.rotateZ(Z);
+		}
+	}
 	
 	public void addPlane(Plane P){
 		planes.add(P);
@@ -249,19 +323,68 @@ class Brush{
 		
 		b = new Brush();
 
-		b.addPlane( Plane.top( TOP ) );
+		/*b.addPlane( Plane.top( TOP ) );
 		b.addPlane( Plane.back( BACK ) );
 		b.addPlane( Plane.right( RIGHT ) );
 		
 		b.addPlane( Plane.bottom( BOTTOM ) );
 		b.addPlane( Plane.front( FRONT ) );
-		b.addPlane( Plane.left( LEFT ) );
+		b.addPlane( Plane.left( LEFT ) );*/
+		
+		b.addPlane( Plane.right(RIGHT));
+		b.addPlane( Plane.back(BACK));
+		b.addPlane( Plane.left(LEFT));
+		b.addPlane( Plane.front(FRONT));
+		b.addPlane( Plane.top(TOP));
+		b.addPlane( Plane.bottom(BOTTOM));
 		
 		for( Plane p : b.planes )
 			p.texture = TEXTURE;
 		
 		return b;
 		
+	}
+	
+	public static Brush cube2(float WIDTH, String TEXTURE){
+		
+		Brush b;
+		Plane p;
+		
+		b = new Brush();
+		
+
+		p = Plane.right(0);
+		p.translate(WIDTH, 0, 0);
+		b.addPlane(p);
+		
+		p = Plane.right(0);
+		p.rotateZ(90);
+		p.translate(0, WIDTH, 0);
+		b.addPlane(p);
+		
+		p = Plane.right(0);
+		p.rotateZ(180);
+		p.translate(-WIDTH, 0, 0);
+		b.addPlane(p);
+		
+		p = Plane.right(0);
+		p.rotateZ(270);
+		p.translate(0, -WIDTH, 0);
+		b.addPlane(p);
+			
+		p = Plane.top(0);
+		p.translate(0, 0, WIDTH);
+		b.addPlane(p);
+		
+		p = Plane.top(0);
+		p.rotateZ(180);
+		p.translate(0, 0, -WIDTH);
+		b.addPlane(p);		
+		
+		for( Plane x : b.planes )
+			x.texture = TEXTURE;
+		
+		return b;
 	}
 		
 }
@@ -316,7 +439,6 @@ class Light extends Entity{
 	public void print(PrintWriter OUT){
 		
 		startPrint(OUT);
-		
 		super.print(OUT);
 		
 		OUT.printf("\"light\" \"%d\"\n", intensity);
@@ -428,14 +550,60 @@ public class Quake3MapGenerator {
 
 	public static void main(String[] args) {
 		
+		PrintWriter out1 = new PrintWriter(System.out);
+		
 		Map mapa = new Map();
 		
 		Brush b;
 		
-		//b = Brush.cube(-1, 1, -1, 1, -10, 0);		
-		//b.scale(1000, 1000, 1);
+		b = Brush.cube2(100, "base_wall/concrete_dark");
 		
-		//mapa.addBrush(b);
+		mapa.addBrush(b);
+		
+		b = Brush.cube(-100, 100, -100, 100, -100, 100, "base_wall/asdfg");
+		
+		mapa.addBrush(b);
+		
+		mapa.print(out1);
+		
+		
+		out1.close();
+		
+		/*Plane p = Plane.left(1.0f);
+		
+		PrintWriter out1 = new PrintWriter(System.out);
+		
+		p.print(out1);
+		
+		out1.println("");
+		
+		out1.flush();
+		
+		p.rotate(0, 180.0f, 0);
+		
+		p.print(out1);
+		
+		out1.close();
+		
+		*/
+		
+		/*
+		Map mapa = new Map();
+		
+		Brush b;
+		
+		b = Brush.cube(-100, 100, -100, 100, -100, 100, "base_wall/concrete_dark");
+		
+		mapa.addBrush(b);
+		
+		b = Brush.cube(-100, 100, -100, 100, -100, 100, "base_wall/concrete_dark");
+		b.rotate(0.0f, 90.0f, 0.0f);
+		
+		mapa.addBrush(b);
+		
+		*/
+		
+		/*
 		String[] textures = {
 				"base_wall/concrete_dark","base_wall/concrete_dark",
 				"base_wall/concrete_dark","base_wall/concrete_dark",
@@ -477,20 +645,27 @@ public class Quake3MapGenerator {
 			}
 		}
 		
+		
+		*/
+		
+		/*
 		try {
-			//FileWriter out = new FileWriter("output.map");
 			
-			PrintWriter out = new PrintWriter("output.map");
+			PrintWriter map_out = new PrintWriter("out.map");
+			PrintWriter console_out = new PrintWriter(System.out);
 			
-			mapa.print(out);
+			mapa.print(map_out);
+			mapa.print(console_out);
 			
-			out.close();
+			map_out.close();
+			console_out.close();
+		
 			
-		} catch (IOException e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
-		}
+		}*/
+		
 
 	}
-
 }
 
