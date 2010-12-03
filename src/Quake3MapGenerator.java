@@ -198,7 +198,9 @@ class Plane{
 		
 		OUT.printf(" %d %d %d %.1f %.1f %d %d %d", sShift, tShift, rotation, sScale, tScale, xx1, xx2, xx3 );
 
-	}	
+	}
+	
+	
 }
 
 class Brush{
@@ -264,18 +266,84 @@ class Brush{
 		
 }
 
+abstract class Entity{
+	public Point origin;
+	
+	abstract public String className();
+	
+	public Entity(){
+		
+		origin = new Point(0.0f,0.0f,0.0f);
+		
+	}
+	
+	public void startPrint(PrintWriter OUT){
+		OUT.println("{");
+	}
+	
+	public void endPrint(PrintWriter OUT){
+		OUT.println("}");
+	}
+	
+	public void print(PrintWriter OUT){
+		OUT.printf("\"classname\" \"%s\"\n", className());
+		OUT.printf("\"origin\" \"%.6f %.6f %.6f\"\n", origin.x, origin.y, origin.z);
+	}
+
+}
+
+class InfoPlayerStart extends Entity{
+	
+	public String className(){ return "info_player_start"; };
+	
+	public void print(PrintWriter OUT){
+		
+		startPrint(OUT);
+		super.print(OUT);
+		endPrint(OUT);
+	}
+	
+}
+
+class Light extends Entity{
+	
+	public int intensity;
+	
+	public Light(){ intensity = 0; };
+	
+	public String className(){ return "light"; };
+	
+	public void print(PrintWriter OUT){
+		
+		startPrint(OUT);
+		
+		super.print(OUT);
+		
+		OUT.printf("\"light\" \"%d\"\n", intensity);
+		
+		endPrint(OUT);
+	}
+	
+}
+
 class Map{
 	
 	private ArrayList<Brush> brushes;
+	private ArrayList<Entity> entities;
 	
 	public Map(){
 		
 		brushes = new ArrayList<Brush>();
+		entities = new ArrayList<Entity>();
 		
 	}
 	
 	public void addBrush(Brush B){
 		brushes.add(B);
+	}
+	
+	public void addEntity(Entity E){
+		entities.add( E );
 	}
 	
 	public void print(PrintWriter OUT){
@@ -290,7 +358,14 @@ class Map{
 		}
 		
 		OUT.println('}');
+		
+		// Print the entities
+		
+		for(Entity e : entities){
+			e.print(OUT);
+		}
 	}
+
 	
 	public void addRoom(float WIDTH, float HEIGHT, float DEPTH, Point CENTER, float WALL_WIDTH, String[] TEXTURES){
 		// Add a room to the map centered at CENTER
@@ -364,9 +439,8 @@ public class Quake3MapGenerator {
 		String[] textures = {
 				"base_wall/concrete_dark","base_wall/concrete_dark",
 				"base_wall/concrete_dark","base_wall/concrete_dark",
-				"base_floor/diamond2c","skies/s18"
+				"base_floor/diamond2c","skies/killsky"
 		};
-		
 		mapa.addRoom(2000, 240, 2000, new Point(0,0,120), 16, textures);
 		
 		for(int X = -1000; X < 1000; X+=200){
@@ -378,7 +452,34 @@ public class Quake3MapGenerator {
 			}
 		}
 		
+		// Add some entities
+		
+		InfoPlayerStart ips = new InfoPlayerStart();
+		
+		ips.origin.x = 0.0f;
+		ips.origin.y = 0.0f;
+		ips.origin.z = 60.0f;
+		
+		mapa.addEntity(ips);
+		
+		// Add lights
+		
+		for(int X = -1000; X < 1000; X+=400){
+			for( int Y = -1000; Y < 1000; Y+=400){
+				
+				Light l = new Light();
+				
+				l.origin.x = X+25;
+				l.origin.y = Y+25;
+				l.origin.z = 80;
+				
+				mapa.addEntity(l);
+			}
+		}
+		
 		try {
+			//FileWriter out = new FileWriter("output.map");
+			
 			PrintWriter out = new PrintWriter("output.map");
 			
 			mapa.print(out);
