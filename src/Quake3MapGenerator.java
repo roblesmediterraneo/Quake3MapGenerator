@@ -34,6 +34,9 @@
     ****************************************************************
 */
 
+
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
@@ -66,6 +69,18 @@ class Point extends Vector3f{
 		x *= X;
 		y *= Y;
 		z *= Z;
+	}
+	
+	public boolean colinear(Point V, float EPSILON){
+		
+		float dot = dot(V);
+		
+		if( 1 - Math.abs(dot) < EPSILON ){	
+			return true;
+		}
+		else{
+			return false;
+		}
 	}
 	
 	public void rotateX(float X){
@@ -105,9 +120,8 @@ class Point extends Vector3f{
 
 
 class Plane{
-	public Point p0;
-	public Point p1;
-	public Point p2;
+	public Point p;	
+	public Point n; // Plane normal
 	
 	public String texture;
 	
@@ -122,6 +136,9 @@ class Plane{
 	public int xx3;
 	
 	public Plane(){
+		p = new Point(0,0,0);
+		n = new Point(1,0,0);
+		
 		texture = "NULL";
 		
 		sShift = tShift = rotation = 0;
@@ -137,122 +154,175 @@ class Plane{
 		xx1 = xx2 = xx3 = 0;
 	}
 	
-	public Plane(Point P0, Point P1, Point P2){
-		p0 = P0; p1 = P1; p2 = P2; texture = "NULL";
+	public Plane(Point P0, Point N){
+		p = P0; n = N; texture = "NULL";
 		
 		sShift = tShift = rotation = 0;
 		sScale = tScale = 0.5;
 		xx1 = xx2 = xx3 = 0;
+		
 	}
 	
-	public Plane(Point P0, Point P1, Point P2, String TEXTURE){
-		p0 = P0; p1 = P1; p2 = P2; texture = TEXTURE;
+	public Plane(Point P0, Point N, String TEXTURE){
+		p = P0; n = N; texture = TEXTURE;
 		
 		sShift = tShift = rotation = 0;
 		sScale = tScale = 0.5;
 		xx1 = xx2 = xx3 = 0;
+
 	}
 	
 	public void scale(float X, float Y, float Z){		
-		p0.scale(X,Y,Z);
-		p1.scale(X,Y,Z);
-		p2.scale(X,Y,Z);
+	
 	}
 	
 	public void translate(float X, float Y, float Z){
-		Vector3f dummy = new Vector3f(X,Y,Z);
-		
-		p0.add(dummy);
-		p1.add(dummy);
-		p2.add(dummy);
+
 	}
 	
 	public void rotateX(float X){
-		
-		p0.rotateX(X);
-		p1.rotateX(X);
-		p2.rotateX(X);
 		
 	}
 	
 	public void rotateY(float Y){
 		
-		p0.rotateY(Y);
-		p1.rotateY(Y);
-		p2.rotateY(Y);
-		
 	}
 	
 	public void rotateZ(float Z){
-		
-		p0.rotateZ(Z);
-		p1.rotateZ(Z);
-		p2.rotateZ(Z);
-		
+				
 	}
 	
 	// xy
 	static Plane top(float Z){
 		// ( 1 1 1 ) ( 1 -1 1 ) ( -1 1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
-		return new Plane(new Point(1,1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
+		//return new Plane(new Point(1,1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
 		
+		return new Plane(new Point(0,0,Z), new Point(0,0,1));
 	}
 	
 	// xz
 	static Plane back(float Y){
 		// ( 1 1 1 ) ( -1 1 1 ) ( 1 1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 
-		return new Plane( new Point(1,Y,1), new Point(-1,Y,1), new Point(1,Y,-1));
+		//return new Plane( new Point(1,Y,1), new Point(-1,Y,1), new Point(1,Y,-1));
 		
+		return new Plane(new Point(0,Y,0), new Point(0,1,0));
 	}
 		
 	// yz
 	static Plane right(float X){
 		// ( 1 1 1 ) ( 1 1 -1 ) ( 1 -1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
-		return new Plane( new Point(X,1,1), new Point(X,1,-1), new Point(X,-1,1));
+		//return new Plane( new Point(X,1,1), new Point(X,1,-1), new Point(X,-1,1));
 		
+		return new Plane(new Point(X,0,0), new Point(1,0,0));
 	}
 	
 	// xy
 	static Plane bottom(float Z){
 		// ( -1 -1 -1 ) ( 1 -1 -1 ) ( -1 1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
-		return new Plane( new Point(-1,-1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
+		//return new Plane( new Point(-1,-1,Z), new Point(1,-1,Z), new Point(-1,1,Z));
+		
+		return new Plane(new Point(0,0,Z), new Point(0,0,-1));
 	}
 	
 	// xz
 	static Plane front(float Y){
 		// ( -1 -1 -1 ) ( -1 -1 1 ) ( 1 -1 -1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
-		return new Plane( new Point(-1,Y,-1),new Point(-1,Y,1),new Point(1,Y,-1));
+		//return new Plane( new Point(-1,Y,-1),new Point(-1,Y,1),new Point(1,Y,-1));
+		
+		return new Plane(new Point(0,Y,0), new Point(0,-1,0));
 	}
 	
 	// yz
 	static Plane left(float X){
 		// 	( -1 -1 -1 ) ( -1 1 -1 ) ( -1 -1 1 ) NULL 0 0 0 0.5 0.5 0 0 0
 		
-		return new Plane( new Point(X,-1,-1),new Point(X,1,-1),new Point(X,-1,1));
+		//return new Plane( new Point(X,-1,-1),new Point(X,1,-1),new Point(X,-1,1));
+		
+		return new Plane(new Point(X,0,0), new Point(-1,0,0));
+	}
+
+	public Point[] find3Points(){
+	
+		Point[] points = new Point[3];
+		
+		points[0] = new Point(0,0,0);
+		points[1] = new Point(0,0,0);
+		points[2] = new Point(0,0,0);
+		
+		// First choose an axis vector that is not colinear with the normal vector of the plane
+		
+		// set an epsilon in order to check if the dotproduct is near one (colinear test)
+		
+		float epsilon = 0.01f;
+		float length = p.length();
+		
+		Point u = new Point(0,0,0);
+		Point v = new Point(0,0,0);
+		
+		// First check the x axis
+		u.set(1*length,0,0);
+		
+		if( n.colinear(u, epsilon) ){
+			// n is colinear with x axis, go for the y one
+			u.set(0,1*length,0);
+			
+			if( n.colinear(u, epsilon) ){
+				// n is colinear with y axis, go for z
+				u.set(0,0,1*length);
+				
+				if( n.colinear(u,epsilon) ){
+					// error can't be colinear with z 
+				}
+			}
+		}
+		
+		// u is a vector that is not colinear with n, calculate the cross product to find a perpendicular vector to n
+		
+		v.cross(n, u);
+		
+		// set u perpendicular to n and v
+		
+		u.cross(n, v);
+		
+		// Now we have a orthogonal basis formed by, n,u and v. the points are p and the translation of p over the coplanar planes
+		
+		points[0].set(p);
+		points[1].set(p);
+		points[2].set(p);
+		
+		points[0].add(u);
+		points[2].add(v);
+
+		
+		
+		return points;
 	}
 	
+
 	public void print(PrintWriter OUT){
 		
+		Point[] points = find3Points();
+		
 		//OUT.print(' ');
-		p0.print(OUT);
+		points[0].print(OUT);
 		
 		OUT.print(' ');
-		p1.print(OUT);
+		points[1].print(OUT);
 		
 		OUT.print(' ');
-		p2.print(OUT);
+		points[2].print(OUT);
 		
 		OUT.print( " " + texture );
 		
 		OUT.printf(" %d %d %d %.1f %.1f %d %d %d", sShift, tShift, rotation, sScale, tScale, xx1, xx2, xx3 );
 
 	}
-	
+
 	
 }
 
@@ -549,25 +619,30 @@ class Map{
 public class Quake3MapGenerator {
 
 	public static void main(String[] args) {
+	
+		try {
+			PrintWriter out1 = new PrintWriter(System.out);
+
+			PrintWriter out = new PrintWriter(new File("../../test.map"));
+			
+			Map mapa = new Map();
+			
+			Brush b;
 		
-		PrintWriter out1 = new PrintWriter(System.out);
-		
-		Map mapa = new Map();
-		
-		Brush b;
-		
-		b = Brush.cube2(100, "base_wall/concrete_dark");
-		
-		mapa.addBrush(b);
-		
-		b = Brush.cube(-100, 100, -100, 100, -100, 100, "base_wall/asdfg");
-		
-		mapa.addBrush(b);
-		
-		mapa.print(out1);
-		
-		
-		out1.close();
+			//b = Brush.cube(-100, 100, -100, 100, -100, 100, "base_wall/asdfg");
+			b = Brush.cube(-32, 32, -32, 32, -32, 32, "base_wall/asdfg");
+			mapa.addBrush(b);
+			
+			mapa.print(out1);
+			mapa.print(out);
+			
+			out1.close();
+			out.close();
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		/*Plane p = Plane.left(1.0f);
 		
